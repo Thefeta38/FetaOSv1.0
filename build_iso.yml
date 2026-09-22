@@ -1,0 +1,85 @@
+name: Build Advanced Feta OS Win7 Edition
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Install Complete Build Toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y live-build xorriso grub-pc-bin grub-efi-amd64-bin syslinux
+
+      - name: Configure Advanced OS
+        run: |
+          mkdir -p build && cd build
+          
+          # Ρύθμιση συστήματος για 64-bit με πλήρεις οδηγούς συσκευών (non-free firmware)
+          lb config \
+            --architectures amd64 \
+            --distribution bookworm \
+            --archive-areas "main contribute non-free non-free-firmware" \
+            --bootloader grub-inline \
+            --binary-images iso-hybrid
+
+          mkdir -p config/package-lists
+          
+          # Λίστα όλων των απαραίτητων πακέτων για πλήρες λειτουργικό
+          cat << 'EOF' > config/package-lists/feta-os.list.chroot
+          # Πυρήνας Linux & Drivers Hardware
+          linux-image-amd64
+          live-boot
+          systemd-sysv
+          firmware-linux
+          firmware-linux-nonfree
+          firmware-realtek
+          firmware-atheros
+          firmware-iwlwifi
+          network-manager
+          network-manager-gnome
+          pulseaudio
+          pavucontrol
+
+          # Γραφικό Περιβάλλον (Win7 style base)
+          lxde
+          lightdm
+          desktop-base
+
+          # Σουίτα Γραφείου (Word, Excel, PowerPoint)
+          libreoffice-writer
+          libreoffice-calc
+          libreoffice-impress
+          libreoffice-gtk3
+
+          # Εφαρμογές Χρήστη (Browser, Calc, Text Editor, Media)
+          firefox-esr
+          mousepad
+          galculator
+          lxterminal
+          pcmanfm
+          vlc
+
+          # Εργαλεία Αρχείων & Συστήματος
+          zip
+          unzip
+          p7zip-full
+          gparted
+          EOF
+
+      - name: Build ISO Image
+        run: |
+          cd build
+          sudo lb build
+          mv *.iso ../feta_os_win7_advanced.iso
+
+      - name: Upload ISO Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: FetaOS-Advanced-Win7-ISO
+          path: feta_os_win7_advanced.iso
