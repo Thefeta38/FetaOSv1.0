@@ -28,11 +28,7 @@ jobs:
             --mirror-bootstrap "http://deb.debian.org/debian/" \
             --mirror-chroot "http://deb.debian.org/debian/" \
             --mirror-binary "http://deb.debian.org/debian/" \
-            --package-lists "desktop" \
-            --tasks "lxde-desktop"
-          
-          # Προσθήκη επιπλέον εφαρμογών
-          echo "firefox-esr libreoffice" | sudo tee config/package-lists/mycustom.list.chroot
+            --packages "lxde firefox-esr libreoffice"
           
           sudo lb build
           mv live-image-amd64.hybrid.iso ../feta_os_win7_advanced.iso
@@ -42,5 +38,6 @@ jobs:
         with:
           name: FetaOS-Advanced-Win7-ISO
           path: feta_os_win7_advanced.iso
+
 
   
