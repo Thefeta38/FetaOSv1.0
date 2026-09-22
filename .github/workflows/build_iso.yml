@@ -77,9 +77,10 @@ jobs:
           cd build
           sudo lb build
           mv *.iso ../feta_os_win7_advanced.iso
-
       - name: Upload ISO Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: FetaOS-Advanced-Win7-ISO
           path: feta_os_win7_advanced.iso
+
+  
