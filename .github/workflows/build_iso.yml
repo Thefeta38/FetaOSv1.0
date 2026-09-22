@@ -8,32 +8,31 @@ on:
 jobs:
   build-iso:
     runs-on: ubuntu-latest
+    container:
+      image: debian:bookworm
+      options: --privileged
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install Complete Build Dependencies
+      - name: Install Build Tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y live-build debootstrap debian-archive-keyring
+          apt-get update
+          apt-get install -y live-build debootstrap debian-archive-keyring
 
       - name: Configure and Build Debian ISO
         run: |
           mkdir -p build && cd build
-          sudo lb config \
+          lb config \
             --mode debian \
             --distribution bookworm \
             --architectures amd64 \
-            --archive-areas "main contrib non-free non-free-firmware" \
-            --mirror-bootstrap "http://deb.debian.org/debian/" \
-            --mirror-chroot "http://deb.debian.org/debian/" \
-            --mirror-binary "http://deb.debian.org/debian/" \
-            --security false
+            --archive-areas "main contrib non-free non-free-firmware"
           
-          # Εγγραφή των πακέτων στη λίστα του live-build
-          echo "task-lxde-desktop firefox-esr libreoffice" | sudo tee config/package-lists/feta.list.chroot
+          echo "task-lxde-desktop firefox-esr libreoffice" > config/package-lists/feta.list.chroot
           
-          sudo lb build
+          lb build
           mv live-image-amd64.hybrid.iso ../feta_os_win7_advanced.iso
 
       - name: Upload ISO Artifact
