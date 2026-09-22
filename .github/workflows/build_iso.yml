@@ -27,9 +27,10 @@ jobs:
             --archive-areas "main contrib non-free non-free-firmware" \
             --mirror-bootstrap "http://deb.debian.org/debian/" \
             --mirror-chroot "http://deb.debian.org/debian/" \
-            --mirror-binary "http://deb.debian.org/debian/"
+            --mirror-binary "http://deb.debian.org/debian/" \
+            --security false
           
-          # Εγγραφή των πακέτων στο επίσημο αρχείο λίστας του live-build
+          # Εγγραφή των πακέτων στη λίστα του live-build
           echo "task-lxde-desktop firefox-esr libreoffice" | sudo tee config/package-lists/feta.list.chroot
           
           sudo lb build
@@ -40,6 +41,7 @@ jobs:
         with:
           name: FetaOS-Advanced-Win7-ISO
           path: feta_os_win7_advanced.iso
+
 
 
 
