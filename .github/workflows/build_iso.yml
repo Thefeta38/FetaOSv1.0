@@ -1,4 +1,4 @@
-name: Build Feta OS (Light Win11)
+name: Build Feta OS (Ubuntu-based Win11)
 
 on:
   push:
@@ -25,19 +25,17 @@ jobs:
         run: |
           mkdir -p build && cd build
           
-          # Ρύθμιση για Ubuntu 24.04 (Noble) χωρίς σφάλματα 404 από mirrors
+          # Ρύθμιση για Ubuntu 24.04 (Noble)
           sudo lb config \
             --mode ubuntu \
             --distribution noble \
             --architectures amd64 \
             --archive-areas "main restricted universe multiverse" \
-            --security false \
-            --updates false \
             --bootloader grub-pc
           
-          # Ελαφριά πακέτα (~1.8 GB ISO)
+          # Πακέτα: XFCE Desktop, Firefox, LibreOffice, Σχολικά & Drivers
           sudo mkdir -p config/package-lists
-          echo "xfce4 xfce4-whiskermenu-plugin lightdm network-manager-gnome virtualbox-guest-x11 virtualbox-guest-utils firefox libreoffice libreoffice-l10n-el scratch geogebra tuxpaint gimp vlc" | sudo tee config/package-lists/feta.list.chroot
+          echo "xubuntu-desktop virtualbox-guest-x11 virtualbox-guest-utils firefox libreoffice libreoffice-l10n-el scratch geogebra tuxpaint gimp vlc" | sudo tee config/package-lists/feta.list.chroot
           
           # Branding: Feta OS στην εκκίνηση
           sudo mkdir -p config/includes.chroot/etc/default
@@ -52,16 +50,17 @@ jobs:
           EOF
           sudo chmod +x config/hooks/live/0100-feta-branding.hook.chroot
           
-          # Χτίσιμο ISO
+          # Χτίσιμο ISO με sudo
           sudo lb build
-          sudo mv live-image-amd64.hybrid.iso ../Feta_OS_Win11_Light.iso
+          sudo mv live-image-amd64.hybrid.iso ../Feta_OS_Ubuntu_Win11.iso
 
       - name: Upload ISO to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v4.1.0
-          name: Feta OS v4.1 (Win11 Light - Small ISO)
-          files: Feta_OS_Win11_Light.iso
+          tag_name: v4.0.0
+          name: Feta OS v4.0 (Ubuntu Win11 Light)
+          files: Feta_OS_Ubuntu_Win11.iso
+
 
 
 
