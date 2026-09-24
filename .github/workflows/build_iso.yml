@@ -1,16 +1,16 @@
-name: Build Advanced Feta OS Win7 Edition
+name: Build Feta OS (Ubuntu-based Win11)
 
 on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-iso:
     runs-on: ubuntu-latest
-    container:
-      image: debian:bookworm
-      options: --privileged
 
     steps:
       - name: Checkout Repository
@@ -18,28 +18,48 @@ jobs:
 
       - name: Install Build Tools
         run: |
-          apt-get update
-          apt-get install -y live-build debootstrap debian-archive-keyring
+          sudo apt-get update
+          sudo apt-get install -y cubic live-build debootstrap xorriso squashfs-tools
 
-      - name: Configure and Build Debian ISO
+      - name: Build Feta OS ISO
         run: |
           mkdir -p build && cd build
+          
+          # Ρύθμιση για Ubuntu 24.04 (Noble)
           lb config \
-            --mode debian \
-            --distribution bookworm \
+            --mode ubuntu \
+            --distribution noble \
             --architectures amd64 \
-            --archive-areas "main contrib non-free non-free-firmware"
+            --archive-areas "main restricted universe multiverse" \
+            --bootloader grub-pc
           
-          echo "task-lxde-desktop firefox-esr libreoffice" > config/package-lists/feta.list.chroot
+          # Πακέτα: XFCE Desktop, Firefox, LibreOffice, Σχολικά & Drivers
+          echo "xubuntu-desktop virtualbox-guest-x11 virtualbox-guest-utils firefox libreoffice libreoffice-l10n-el scratch geogebra tuxpaint gimp vlc" > config/package-lists/feta.list.chroot
           
+          # Branding: Feta OS στην εκκίνηση
+          mkdir -p config/includes.chroot/etc/default
+          echo 'GRUB_DISTRIBUTOR="Feta OS"' > config/includes.chroot/etc/default/grub
+          
+          mkdir -p config/hooks/live
+          cat << 'EOF' > config/hooks/live/0100-feta-branding.hook.chroot
+          #!/bin/sh
+          echo "feta-os" > /etc/hostname
+          sed -i 's/Ubuntu/Feta OS/g' /etc/os-release
+          sed -i 's/UBUNTU/FETA_OS/g' /etc/os-release
+          EOF
+          chmod +x config/hooks/live/0100-feta-branding.hook.chroot
+          
+          # Χτίσιμο ISO
           lb build
-          mv live-image-amd64.hybrid.iso ../feta_os_win7_advanced.iso
+          mv live-image-amd64.hybrid.iso ../Feta_OS_Ubuntu_Win11.iso
 
-      - name: Upload ISO Artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload ISO to GitHub Releases
+        uses: softprops/action-gh-release@v2
         with:
-          name: FetaOS-Advanced-Win7-ISO
-          path: feta_os_win7_advanced.iso
+          tag_name: v4.0.0
+          name: Feta OS v4.0 (Ubuntu Win11 Light)
+          files: Feta_OS_Ubuntu_Win11.iso
+
 
 
 
