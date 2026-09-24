@@ -25,8 +25,8 @@ jobs:
         run: |
           mkdir -p build && cd build
           
-          # Ρύθμιση για Ubuntu 24.04 (Noble)
-          lb config \
+          # Ρύθμιση για Ubuntu 24.04 (Noble) με δικαιώματα root
+          sudo lb config \
             --mode ubuntu \
             --distribution noble \
             --architectures amd64 \
@@ -34,24 +34,25 @@ jobs:
             --bootloader grub-pc
           
           # Πακέτα: XFCE Desktop, Firefox, LibreOffice, Σχολικά & Drivers
-          echo "xubuntu-desktop virtualbox-guest-x11 virtualbox-guest-utils firefox libreoffice libreoffice-l10n-el scratch geogebra tuxpaint gimp vlc" > config/package-lists/feta.list.chroot
+          sudo mkdir -p config/package-lists
+          echo "xubuntu-desktop virtualbox-guest-x11 virtualbox-guest-utils firefox libreoffice libreoffice-l10n-el scratch geogebra tuxpaint gimp vlc" | sudo tee config/package-lists/feta.list.chroot
           
           # Branding: Feta OS στην εκκίνηση
-          mkdir -p config/includes.chroot/etc/default
-          echo 'GRUB_DISTRIBUTOR="Feta OS"' > config/includes.chroot/etc/default/grub
+          sudo mkdir -p config/includes.chroot/etc/default
+          echo 'GRUB_DISTRIBUTOR="Feta OS"' | sudo tee config/includes.chroot/etc/default/grub
           
-          mkdir -p config/hooks/live
-          cat << 'EOF' > config/hooks/live/0100-feta-branding.hook.chroot
+          sudo mkdir -p config/hooks/live
+          cat << 'EOF' | sudo tee config/hooks/live/0100-feta-branding.hook.chroot
           #!/bin/sh
           echo "feta-os" > /etc/hostname
           sed -i 's/Ubuntu/Feta OS/g' /etc/os-release
           sed -i 's/UBUNTU/FETA_OS/g' /etc/os-release
           EOF
-          chmod +x config/hooks/live/0100-feta-branding.hook.chroot
+          sudo chmod +x config/hooks/live/0100-feta-branding.hook.chroot
           
-          # Χτίσιμο ISO
-          lb build
-          mv live-image-amd64.hybrid.iso ../Feta_OS_Ubuntu_Win11.iso
+          # Χτίσιμο ISO με sudo
+          sudo lb build
+          sudo mv live-image-amd64.hybrid.iso ../Feta_OS_Ubuntu_Win11.iso
 
       - name: Upload ISO to GitHub Releases
         uses: softprops/action-gh-release@v2
@@ -59,6 +60,7 @@ jobs:
           tag_name: v4.0.0
           name: Feta OS v4.0 (Ubuntu Win11 Light)
           files: Feta_OS_Ubuntu_Win11.iso
+
 
 
 
