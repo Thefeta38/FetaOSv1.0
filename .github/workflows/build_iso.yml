@@ -25,15 +25,17 @@ jobs:
         run: |
           mkdir -p build && cd build
           
-          # Ρύθμιση για Ubuntu 24.04 (Noble)
+          # Ρύθμιση για Ubuntu 24.04 (Noble) χωρίς σφάλματα 404 από mirrors
           sudo lb config \
             --mode ubuntu \
             --distribution noble \
             --architectures amd64 \
             --archive-areas "main restricted universe multiverse" \
+            --security false \
+            --updates false \
             --bootloader grub-pc
           
-          # ΜΟΝΟ τα απαραίτητα ελαφριά πακέτα (χωρίς το βαρύ xubuntu-desktop)
+          # Ελαφριά πακέτα (~1.8 GB ISO)
           sudo mkdir -p config/package-lists
           echo "xfce4 xfce4-whiskermenu-plugin lightdm network-manager-gnome virtualbox-guest-x11 virtualbox-guest-utils firefox libreoffice libreoffice-l10n-el scratch geogebra tuxpaint gimp vlc" | sudo tee config/package-lists/feta.list.chroot
           
@@ -50,7 +52,7 @@ jobs:
           EOF
           sudo chmod +x config/hooks/live/0100-feta-branding.hook.chroot
           
-          # Χτίσιμο ISO με sudo
+          # Χτίσιμο ISO
           sudo lb build
           sudo mv live-image-amd64.hybrid.iso ../Feta_OS_Win11_Light.iso
 
@@ -60,6 +62,7 @@ jobs:
           tag_name: v4.1.0
           name: Feta OS v4.1 (Win11 Light - Small ISO)
           files: Feta_OS_Win11_Light.iso
+
 
 
 
