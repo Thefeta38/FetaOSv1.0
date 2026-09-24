@@ -19,7 +19,7 @@ jobs:
       - name: Install Build Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cubic live-build debootstrap xorriso squashfs-tools
+          sudo apt-get install -y live-build debootstrap xorriso squashfs-tools
 
       - name: Build Feta OS ISO
         run: |
