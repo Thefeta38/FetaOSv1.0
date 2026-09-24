@@ -1,4 +1,4 @@
-name: Build Feta OS (Ubuntu-based Win11)
+name: Build Feta OS (Zero Debian - Modern)
 
 on:
   push:
@@ -11,6 +11,9 @@ permissions:
 jobs:
   build-iso:
     runs-on: ubuntu-latest
+    container:
+      image: debian:testing
+      options: --privileged
 
     steps:
       - name: Checkout Repository
@@ -18,48 +21,73 @@ jobs:
 
       - name: Install Build Tools
         run: |
-          sudo apt-get update
-          sudo apt-get install -y live-build debootstrap xorriso squashfs-tools syslinux-utils isolinux
+          apt-get update
+          apt-get install -y live-build debootstrap debian-archive-keyring git curl
 
       - name: Build Feta OS ISO
         run: |
           mkdir -p build && cd build
           
-          # Ρύθμιση για Ubuntu 24.04 (Noble)
-          sudo lb config \
-            --mode ubuntu \
-            --distribution noble \
+          # Χρήση Debian Testing (Trixie) για νεότερες εκδόσεις/Kernel
+          lb config \
+            --mode debian \
+            --distribution trixie \
             --architectures amd64 \
-            --archive-areas "main restricted universe multiverse" \
+            --archive-areas "main contrib non-free non-free-firmware" \
             --bootloader grub-pc
           
-          # Πακέτα: XFCE Desktop, Firefox, LibreOffice, Σχολικά & Drivers
-          sudo mkdir -p config/package-lists
-          echo "xubuntu-desktop virtualbox-guest-x11 virtualbox-guest-utils firefox libreoffice libreoffice-l10n-el scratch geogebra tuxpaint gimp vlc" | sudo tee config/package-lists/feta.list.chroot
+          # Ελαφρύ περιβάλλον XFCE, Whiskermenu (Win11 style) & Μοντέρνο Θέμα
+          mkdir -p config/package-lists
+          echo "xfce4 xfce4-whiskermenu-plugin lightdm network-manager-gnome virtualbox-guest-x11 virtualbox-guest-utils firefox-esr libreoffice libreoffice-l10n-el scratch geogebra tuxpaint gimp vlc arc-theme papirus-icon-theme" > config/package-lists/feta.list.chroot
           
-          # Branding: Feta OS στην εκκίνηση
-          sudo mkdir -p config/includes.chroot/etc/default
-          echo 'GRUB_DISTRIBUTOR="Feta OS"' | sudo tee config/includes.chroot/etc/default/grub
+          # Branding 1: Οθόνη GRUB (Εκκίνηση)
+          mkdir -p config/includes.chroot/etc/default
+          echo 'GRUB_DISTRIBUTOR="Feta OS version 1 PC"' > config/includes.chroot/etc/default/grub
           
-          sudo mkdir -p config/hooks/live
-          cat << 'EOF' | sudo tee config/hooks/live/0100-feta-branding.hook.chroot
+          # Branding 2: Ολική εξαφάνιση της λέξης Debian από παντού
+          mkdir -p config/hooks/live
+          cat << 'EOF' > config/hooks/live/0100-feta-full-branding.hook.chroot
           #!/bin/sh
+          # Όνομα Υπολογιστή
           echo "feta-os" > /etc/hostname
-          sed -i 's/Ubuntu/Feta OS/g' /etc/os-release
-          sed -i 's/UBUNTU/FETA_OS/g' /etc/os-release
+
+          # Αρχείο Ρυθμίσεων / Πληροφοριών Συστήματος
+          cat << 'OSRELEASE' > /etc/os-release
+          NAME="Feta OS"
+          VERSION="1 PC"
+          ID=fetaos
+          PRETTY_NAME="Feta OS version 1 PC"
+          VERSION_ID="1"
+          HOME_URL="https://github.com"
+          OSRELEASE
+
+          cat << 'LSBRELEASE' > /etc/lsb-release
+          DISTRIB_ID=FetaOS
+          DISTRIB_RELEASE=1
+          DISTRIB_CODENAME=feta
+          DISTRIB_DESCRIPTION="Feta OS version 1 PC"
+          LSBRELEASE
+
+          # Κείμενο Τερματικού & Boot
+          echo "Feta OS version 1 PC \n \l" > /etc/issue
+          echo "Feta OS version 1 PC" > /etc/issue.net
+
+          # Αφαίρεση πακέτων που φέρουν το σήμα/όνομα του Debian
+          apt-get purge -y desktop-base || true
           EOF
-          sudo chmod +x config/hooks/live/0100-feta-branding.hook.chroot
+          chmod +x config/hooks/live/0100-feta-full-branding.hook.chroot
           
-          # Χτίσιμο ISO με sudo
-          sudo lb build
-          sudo mv live-image-amd64.hybrid.iso ../Feta_OS_Ubuntu_Win11.iso
+          # Χτίσιμο ISO
+          lb build
+          mv live-image-amd64.hybrid.iso ../Feta_OS_v1.iso
 
       - name: Upload ISO to GitHub Releases
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v4.0.0
-          name: Feta OS v4.0 (Ubuntu Win11 Light)
-          files: Feta_OS_Ubuntu_Win11.iso
+          tag_name: v1.0.0
+          name: Feta OS version 1 PC
+          files: Feta_OS_v1.iso
+
 
 
 
